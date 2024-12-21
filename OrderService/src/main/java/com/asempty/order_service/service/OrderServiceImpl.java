@@ -1,5 +1,6 @@
 package com.asempty.order_service.service;
 
+import com.asempty.PaymentService.dto.PaymentResponse;
 import com.asempty.order_service.client.PaymentServiceClient;
 import com.asempty.order_service.client.ProductServiceClient;
 import com.asempty.order_service.dto.OrderRequest;
@@ -9,20 +10,30 @@ import com.asempty.order_service.dto.ProductResponse;
 import com.asempty.order_service.entity.Order;
 import com.asempty.order_service.exception.CustomException;
 import com.asempty.order_service.repository.OrderRepository;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
 
 @Service
-@RequiredArgsConstructor
 @Log4j2
+@NoArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
-    private final OrderRepository orderRepository;
-    private final ProductServiceClient productServiceClient;
-    private final PaymentServiceClient paymentServiceClient;
+    @Autowired
+    public OrderRepository orderRepository;
+    @Autowired
+    public ProductServiceClient productServiceClient;
+    @Autowired
+    public PaymentServiceClient paymentServiceClient;
+
+    @Autowired(required = false)
+    public RestTemplate restTemplate;
+
 
     @Override
     public long placeOrder(OrderRequest orderRequest) {
@@ -63,13 +74,26 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse getOrderDetail(long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new CustomException("Order not found","NOT_FOUND", 404));
+
+        ProductResponse productResponse
+                = restTemplate.getForObject(
+                "http://PRODUCT-SERVICE/product/" + order.getProductId(),
+                ProductResponse.class
+        );
+
+        PaymentResponse paymentResponse
+                = restTemplate.getForObject(
+                "http://PAYMENT-SERVICE/payment/order/" + order.getId(),
+                PaymentResponse.class
+        );
+
         OrderResponse orderResponse = OrderResponse.builder()
                 .orderId(orderId)
                 .orderDate(order.getOrderDate())
                 .orderStatus(order.getOrderStatus())
                 .amount(order.getTotalAmount())
-                .productDetails(productServiceClient.getProductById(order.getProductId()).getBody())
-                .paymentResponse(paymentServiceClient.getPaymentDetailByOrderId(orderId).getBody())
+                .productDetails(productResponse)
+                .paymentResponse(paymentResponse)
                 .build();
         return orderResponse;
     }
