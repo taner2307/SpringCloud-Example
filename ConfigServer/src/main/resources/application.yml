@@ -1,0 +1,26 @@
+server:
+  port: 9296
+
+spring:
+  profiles:
+    active: native
+  application:
+    name: CONFIG-SERVER
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/taner2307/SpringBoot-microservice-config
+          clone-on-start: true
+          username: taneracs@hotmail.com
+          password: Zlatan1993..
+          ignore-local-ssh-settings: true
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/

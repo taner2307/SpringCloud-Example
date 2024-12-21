@@ -1,0 +1,55 @@
+server:
+  port: 9090
+
+spring:
+  application:
+    name: Api-Gateway
+  config:
+    import: configserver:http://localhost:9296
+  cloud:
+    gateway:
+      routes:
+      - id: Order-Service
+        uri: lb://Order-Service
+        predicates:
+          - Path=/order/**
+        filters:
+          - name: CircuitBreaker
+            args:
+              name: Order-Service
+              fallbackUri: forward:/orderServiceFallback
+          - name: RequestRateLimiter
+            args:
+              redis-rate-limiter.replenishRate: 1
+              redis-rate-limiter.burstCapacity: 1
+      - id: Payment-Service
+        uri: lb://Payment-Service
+        predicates:
+          - Path=/payment/**
+        filters:
+          - name: CircuitBreaker
+            args:
+              name: Payment-Service
+              fallbackUri: forward:/paymentServiceFallback
+          - name: RequestRateLimiter
+            args:
+              redis-rate-limiter.replenishRate: 1
+              redis-rate-limiter.burstCapacity: 1
+      - id: Product-Service
+        uri: lb://Product-Service
+        predicates:
+          - Path=/product/**
+        filters:
+          - name: CircuitBreaker
+            args:
+              name: Product-Service
+              fallbackUri: forward:/productServiceFallback
+          - name: RequestRateLimiter
+            args:
+              redis-rate-limiter.replenishRate: 1
+              redis-rate-limiter.burstCapacity: 1
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9095/realms/springcloud-realm
