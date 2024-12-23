@@ -20,7 +20,7 @@ public interface ProductServiceClient {
     @GetMapping("/{id}")
     ResponseEntity<ProductResponse> getProductById(@PathVariable("id") long productId);
 
-    default void fallback(Exception e) {
+    default ResponseEntity<Void> fallback(Exception e) {
         throw new CustomException("Product Service is unavailable", "UNAVAILABLE", 500);
     }
 }

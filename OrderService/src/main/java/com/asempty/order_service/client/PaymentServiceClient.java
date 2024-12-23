@@ -18,7 +18,7 @@ public interface PaymentServiceClient {
     @GetMapping("/{orderId}")
      ResponseEntity<PaymentResponse> getPaymentDetailByOrderId(@PathVariable("orderId") long orderId);
 
-    default void fallback(Exception e) {
+    default ResponseEntity<Void> fallback(Exception e) {
         throw new CustomException("Payment Service is unavailable", "UNAVAILABLE", 500);
     }
 }
